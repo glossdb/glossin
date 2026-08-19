@@ -99,7 +99,10 @@ frame once per state and every tile bound to it shares that one table.
 A frame is planned through the same path every other read takes, so
 every door is available inside one — `read.<metric>()` for a grounding,
 `metric_series()` for the measured cube's rows (`dimension = ''` is the
-total, `'alternative'` the disclosed rival), and `whatif.<scenario>()`
+total, `'alternative'` the disclosed rival; each row also carries
+`num`/`den` for a ratio's summed halves and `behavior`, the metric's
+verb), `metric_days('<metric>')` for one metric's last 90 observed
+days computed live from the grounding, and `whatif.<scenario>()`
 for a declared what-if beside the real books:
 
 ```sql
@@ -107,9 +110,17 @@ SELECT month, replay, p05, p50, p95 FROM whatif.capacity_shift()
 WHERE concept = CAST($concept AS VARCHAR) ORDER BY month
 ```
 
-The one limit: a placeholder binds a **value, not a relation name**.
+The one limit: a placeholder binds a **value, not a relation name** —
+a door argument counts as a value (`metric_days($metric)` works).
 The scenario is fixed per frame; the URL steers the concept, the month,
 the slice. A page comparing two scenarios holds two frames.
+
+URL params starting with `w.` are the viewer's window — display state
+the store never forwards to frames, so changing them refetches
+nothing. The `gl-window` control writes them (grain and span) and
+`windowed` charts re-derive in the browser at the metric's verb: a
+flow sums, a stock takes the last period, a ratio divides its summed
+halves.
 
 ## Tiles place what the frame computed
 
@@ -132,10 +143,17 @@ vocabulary. Four macros and a prose block:
 - `value(frame, field, label, …)` — one number, `format` in
   `compact | text`. Use `text` for a word (a band name); the compact
   format renders `NaN` for it.
-- `chart(frame, spec, …)` — a vega-lite spec over the frame.
+- `chart(frame, spec, …)` — a vega-lite spec over the frame. Pass
+  `windowed=true` to follow the viewer's `gl-window`; add
+  `daily="frames/<name>"` to serve its day and week grains from a
+  live day frame.
 - `gl-rows` with your own `<template>` — a row surface where you place
   each field by name (`{subj}`, `{what}`), for anything that is a list
   of matters rather than a table of numbers.
+- `<gl-window>` — the viewer's grain and span control; add `daily`
+  when a day frame exists. `<gl-drivers frame="frames/<name>">` ranks
+  member moves between the last two windowed periods from cells the
+  page already holds.
 - The **chip** is the tile's provenance: which read the number comes
   from, with `note` as its hover text — a disclosed assumption, a
   composition rule. A tile without a chip is a number with no address.
