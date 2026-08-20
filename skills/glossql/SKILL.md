@@ -58,7 +58,7 @@ calls: the server keeps one session per actor.
 | `GLOSS aspect ON subject AS $$json$$;` | speak a value into your slot |
 | `SELECT … FROM GLOSSARY(subject);` | the collapsed context; `all => true` for every slot |
 | `DECLARE FUNCTION f FOR ops\|GLOBAL AS $$body$$ [RETURNS aspect];` | register a function — with `RETURNS` the body is one SQL query the engine plans, without it a detector script; the body rides the statement, so `SELECT script FROM functions` reads the shipped library back as worked examples (`glossql-functions` teaches writing one) |
-| `SELECT f() FROM work_orders.duration_min;` | extract — computes at the read's pin and lands a `measurements` row; the same pin serves the row back, any input moving makes a new pin and recomputes; a body carrying a `summary` object serves the summary alone (the cube, the profile) — the full body reads back via `GLOSSARY(subject::aspect)`, uncapped |
+| `SELECT f() FROM work_orders.duration_min;` | extract — computes at the read's pin and lands a `measurements` row; the same pin serves the row back, any input moving makes a new pin and recomputes; a body carrying a `summary` object serves the summary alone (the profile) — the full body reads back via `GLOSSARY(subject::aspect)`, uncapped |
 | `DECLARE WITNESS w ON aspect [BY (AGENT, HUMAN)] [DETECTOR f THRESHOLD x];` | admit speakers, wire adjudication |
 | `SELECT … FROM ATTEST(subject \| ops::aspect);` | bands and scores; sweeps are WHERE clauses |
 
@@ -102,12 +102,12 @@ the door, the app and these examples:
 
 | read | serves |
 |---|---|
-| `workspace_next` | the nine surfaces this workspace can be extended through, what stands and what is open on each |
+| `workspace_next` | the surfaces this workspace can be extended through, what stands and what is open on each |
 | `open_questions` | what stands open for a human to judge — the rows the door asks as forms |
 | `ruling_entries` | the human's standing judgments, with `folded_in` |
 | `owed` | what waits on an act: an unexecuted recipe approval, a formula newer than its materialization, a contested slot, a ruling awaiting its fold-in |
 | `agent_assumptions` | every assumption you currently disclose |
-| `metric_surfaces` | every declared metric with its latest cube month, move, axes and formula |
+| `metric_surfaces` | every declared metric with its unit, meaning, formula and whether it is grounded — the record; the cube's numbers are `metric_series()` and `metric_axes()` |
 | `app_parts` | apps authored as glosses, one row per file (`glossql-apps` teaches writing one) |
 
 A shipped name is reserved: it shadows a table *and* a CTE of the same
@@ -218,10 +218,12 @@ Then close what owes an act, in the same session:
   the moment your current body carries that key at full confidence;
   until then the ruling keeps the question closed for you both. Keep
   the key and rewrite the prose as freely as the correction requires
-  — the join is on the key alone. **Fold in every standing ruling
-  before re-reading the cube or the walk** — each grounding write moves
-  the pin, so one batch of fold-ins then one recompute, never a
-  recompute per ruling. Read the ruling notes as
+  — the join is on the key alone. **Fold in every standing ruling,
+  then re-measure, then the walk** — each write moves the pin; the
+  cube rebuilds at its next read on the newest verdicts and marks
+  them (`metric_axes().judged_current`) until the profilers run again,
+  and the walk lands at the pin it runs at — so one batch of
+  fold-ins, the profilers once, the walk once. Read the ruling notes as
   you fold: a note naming a sibling aspect ("differs from … by
   design", or a slip re-ruled) is the human's cross-aspect judgment —
   carry it into the grounding's assumption text. A ruling whose stance
@@ -274,7 +276,7 @@ question leaves the workspace, walk this map and run what answers it:
 | hierarchies inside dimensions | `detect_hierarchies()` |
 | two metrics accidentally identical | `detect_grounding_collisions()` |
 | whether a metric's month is surprising | `metric_bands()`, adjudicated by `band_breach` |
-| the app's series and slices | `metric_cube()`, served by `metric_series()` |
+| the app's series and slices | `metric_series(grain => …)` — the cube, computed at read and cached, never landed; `metric_axes()` says what it admitted |
 | which rows look wrong, on a signal | `misfit.<frame>()` |
 | whether an authored expectation holds | a check function's voice + `rate_tolerance`, read via `ATTEST()` |
 

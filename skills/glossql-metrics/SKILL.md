@@ -630,21 +630,43 @@ top. Every point is honest: its fit saw only the months before it.
   months the walk says nothing.
 - It follows the grounding's authored behavior — mark your stocks.
 
-`metric_cube` is its sibling and the app's fuel: monthly totals,
-slices along served dimension columns, and the disclosed rival series.
-Run it whenever you run the walk — a grounding write or a landed
-import stales both caches. A dimension the cube should slice must be a
-served column of the extract.
+The cube is its sibling and the app's fuel: every grounded metric's
+cells — the total, the slices along its judged dimensions, the
+disclosed rival — at the metric's resolution, computed at read and
+cached, never recorded. Nothing to run and nothing to land:
+`metric_series()` builds what is not built. A dimension the cube
+should slice must be a served column of the extract.
 
 The axes come from judged verdicts, not from the data's shape: a
 served column enters as a dimension when its `dimension_relevance`
 verdict is applicable (relevance orders the admitted, up to four),
 and the time axis is the served date column whose `temporal_profile`
 shows a named cadence — highest completeness wins. A column nobody
-judged stays out, and a frame with no judged date column abstains. So
-run `temporal()` and `dimension_relevance()` over the served columns
-before the cube, and after your last declaration — a declaration
-moves the pin, and measurements landed before it read as drift.
+judged stays out, and a frame with no judged date column abstains;
+`metric_axes()` says so per metric, with the road out. The verdicts
+the cube admits on are the newest landed, whatever pin they were
+judged at: a measurement is reachable at its own pin and every write
+moves the pin, so after a gloss or an import the cube still builds on
+them and `metric_axes().judged_current` turns false. Re-run
+`temporal()` and `dimension_relevance()` over the served columns
+after a data change — the docket's re-measure button does the same.
+
+Resolution and window are the `cube` aspect's, declared by the kit on
+the dataset: a metric's cells stand at its judged cadence and never
+finer than the floor (`day` by default), over the ladder's rung for
+that resolution — minutes for a day, hours for a month, days for 18
+months, weeks for 3 years, months for 48, quarters for 10 years,
+years for 20 — measured back from the data's own edge. A gloss
+overrides the floor or any rung, and supersedes like any gloss:
+
+```glossql
+GLOSS cube ON ops AS $${"resolution": "hour", "windows": {"hour": "7 days"}}$$;
+```
+
+Every coarser grain derives from the cells by the verb on the server
+— a flow sums, a stock takes the bucket's last period, a ratio
+divides its summed halves — so mark your stocks and serve a ratio's
+halves; both hold at every grain and for the rival too.
 
 Wide axes bucket instead of dropping out: up to 24 members every one
 is named; above that the axis serves its top 23 by weight — summed
@@ -656,38 +678,37 @@ decision, not a cap to fight — serve a narrower or derived column (a
 region for the country, a group for the org) from the metric's own
 SQL.
 
-Where every metric stands, in one read:
+Where every metric stands, in one read — the record:
 
 ```sql
-SELECT metric, title, unit, meaning, period, value, axes, formula
+SELECT metric, title, unit, meaning, formula
 FROM metric_surfaces ORDER BY metric
 ```
 
-And the cube's own numbers read back through `metric_series()` — one
-row per metric, dimension, member and period. `dimension = ''` is the
-metric's own total, `'alternative'` is the disclosed rival, anything
-else is a served dimension; a wide dimension serves its top members
-plus an `'other'` bucket, and the cube's fact row names which ones
-were bucketed. This is what an app frame charts:
+What the cube admitted, per metric, and why not:
 
 ```sql
-SELECT metric, period, value FROM metric_series()
+SELECT metric, applicable, reason, behavior, resolution, dims, bucketed, alternative
+FROM metric_axes() ORDER BY metric
+```
+
+And the cells through `metric_series(grain => …)` — one row per
+metric, dimension, member and period at the asked grain (absent, each
+metric's own resolution; a grain finer than a metric's resolution
+serves no rows for it). `dimension = ''` is the metric's own total,
+`'alternative'` the disclosed rival, anything else a served
+dimension; a ratio row carries `num` / `den`, and `behavior` is the
+verb that made the row. This is what an app frame charts:
+
+```sql
+SELECT metric, period, value FROM metric_series(grain => 'month')
 WHERE dimension = '' ORDER BY metric, period
 ```
 
-A workspace write does not blank the series — it serves the last
-landed cube with `current = false` on every row, and the docket shows
-the same numbers marked stale. The recompute is yours to pull, and
-`workspace_next`'s `cube` surface shows `open = 1` while it is owed:
-
-```sql
-SELECT DISTINCT current FROM metric_series()
-```
-
-**Fold in every standing ruling before recomputing either.** Each
-grounding write stales both caches, so one batch of fold-ins then one
-recompute, never a recompute per ruling — run the cube LAST, after
-your final write, or you hand the docket a stale flag on your way out.
+**Fold in every standing ruling, then re-measure.** The cube computes
+at the next read from the newest verdicts — so one batch of fold-ins,
+then the profilers over the served columns, and `judged_current` is
+true on the docket's next load.
 
 ## Asking what would happen — the scenario door
 

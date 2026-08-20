@@ -98,12 +98,12 @@ frame once per state and every tile bound to it shares that one table.
 
 A frame is planned through the same path every other read takes, so
 every door is available inside one — `read.<metric>()` for a grounding,
-`metric_series()` for the measured cube's rows (`dimension = ''` is the
-total, `'alternative'` the disclosed rival; each row also carries
-`num`/`den` for a ratio's summed halves and `behavior`, the metric's
-verb), `metric_days('<metric>')` for one metric's last 90 observed
-days computed live from the grounding, and `whatif.<scenario>()`
-for a declared what-if beside the real books:
+`metric_series(grain => $grain)` for the cube's cells at a grain
+(`dimension = ''` is the total, `'alternative'` the disclosed rival;
+a row carries `num`/`den` for a ratio's summed halves and `behavior`,
+the verb that made it), `metric_axes()` for what the cube admitted per
+metric, and `whatif.<scenario>()` for a declared what-if beside the
+real books:
 
 ```sql
 SELECT month, replay, p05, p50, p95 FROM whatif.capacity_shift()
@@ -111,16 +111,20 @@ WHERE concept = CAST($concept AS VARCHAR) ORDER BY month
 ```
 
 The one limit: a placeholder binds a **value, not a relation name** —
-a door argument counts as a value (`metric_days($metric)` works).
+a door argument counts as a value (`metric_series(grain => $grain)`
+works).
 The scenario is fixed per frame; the URL steers the concept, the month,
 the slice. A page comparing two scenarios holds two frames.
 
-URL params starting with `w.` are the viewer's window — display state
-the store never forwards to frames, so changing them refetches
-nothing. The `gl-window` control writes them (grain and span) and
-`windowed` charts re-derive in the browser at the metric's verb: a
-flow sums, a stock takes the last period, a ratio divides its summed
-halves.
+A viewer's window is ordinary params: `?grain=quarter&span=24` binds
+as `$grain` and `$span`, and the frame SQL is the filter — the cube
+serves the grain by the metric's verb on the server, the frame clips
+the span (`dense_rank() OVER (ORDER BY period DESC)` against `$span`).
+A reference's own params are the author's defaults
+(`frames/trend?grain=month&span=24`); the page URL overrides them, and
+only the frames whose URL changed refetch. Keep the back-control on
+top: whatever narrows a view — the window, a slice picker, the crumbs
+— sits above what it narrows, never below or inside it.
 
 ## Tiles place what the frame computed
 
@@ -143,17 +147,20 @@ vocabulary. Four macros and a prose block:
 - `value(frame, field, label, …)` — one number, `format` in
   `compact | text`. Use `text` for a word (a band name); the compact
   format renders `NaN` for it.
-- `chart(frame, spec, …)` — a vega-lite spec over the frame. Pass
-  `windowed=true` to follow the viewer's `gl-window`; add
-  `daily="frames/<name>"` to serve its day and week grains from a
-  live day frame.
+- `chart(frame, spec, …)` — a vega-lite spec over the frame; a window
+  over its series is the frame's own params.
 - `gl-rows` with your own `<template>` — a row surface where you place
   each field by name (`{subj}`, `{what}`), for anything that is a list
-  of matters rather than a table of numbers.
-- `<gl-window>` — the viewer's grain and span control; add `daily`
-  when a day frame exists. `<gl-drivers frame="frames/<name>">` ranks
-  member moves between the last two windowed periods from cells the
-  page already holds.
+  of matters rather than a table of numbers. `join="frames/<name>"
+  on="<key>"` merges a second frame's row by key into each row — how
+  a record frame and a data frame meet in one list without becoming
+  one fetch (the docket's pulse: `metric_surfaces` rows joined to the
+  cube's numbers by metric name).
+- `<gl-window frame="frames/<axes>">` — the viewer's grain and span as
+  links over the page URL; it reads the metric's resolution from a
+  `metric_axes()` frame and offers the grains from there up. Member
+  moves are a frame, not a component: rank them in SQL (the docket's
+  `drivers.sql` is the shape) and place them with `gl-rows`.
 - The **chip** is the tile's provenance: which read the number comes
   from, with `note` as its hover text — a disclosed assumption, a
   composition rule. A tile without a chip is a number with no address.
